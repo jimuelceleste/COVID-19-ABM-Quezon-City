@@ -1,5 +1,4 @@
 # COVID-19-Agent-Based-Model
-COVID-19-Agent-Based-Model
 ===============================
 
 COVID-19 Agent-based simulation model build on Mesa framework
