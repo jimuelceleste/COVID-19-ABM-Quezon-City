@@ -1,22 +1,15 @@
 # COVID-19-Agent-Based-Model
 
-COVID-19 Agent-Based Model built using Mesa framework.
+This agent based model is a work in progress that aims to simulate the COVID-19 cases in the six districts of Quezon City, Metro Manila, Philippines. We used Mesa framework to build the model.
 
 Quickstart
 ----------
 1. Install Mesa
 ```
-python3 -m pip install mesa
+bash
+pip install mesa
 ```
-or
-```
-python3 -m pip install -r requirements.txt
-```
-2. Run the program
-```
-python3 run.py
-```
-or 
+2. Run the server
 ```
 mesa runserver
 ```
