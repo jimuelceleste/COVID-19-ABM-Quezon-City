@@ -126,6 +126,18 @@ class Covid19Model(Model):
         """Subtracts 1 to the removed of the given district."""
         self.SEIR[district]["R"] -= 1
 
+    def get_susceptible(self, district):
+        return self.SEIR[district]["S"]
+
+    def get_exposed(self, district):
+        return self.SEIR[district]["E"]
+
+    def get_infected(self, district):
+        return self.SEIR[district]["I"]
+
+    def get_removed(self, district):
+        return self.SEIR[district]["R"]
+
     def get_SEIR(self, district):
         """Returns the SEIR value of the given district."""
         return [
