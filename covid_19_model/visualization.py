@@ -1,7 +1,5 @@
 # visualization.py
-
-from mesa.visualization.modules import CanvasGrid
-from mesa.visualization.modules import ChartModule
+from mesa.visualization.modules import ChartModule, TextElement
 from covid_19_model.model import Covid19Model
 
 def agent_portrayal(agent):
@@ -11,7 +9,6 @@ def agent_portrayal(agent):
         "Filled": "true",
         "r": 0.6
         }
-
     if agent.susceptible:
         portrayal["Color"] = "green"
         portrayal["Layer"] = 0
@@ -30,26 +27,34 @@ def agent_portrayal(agent):
 
     return portrayal
 
-def instantiate_chart_module(number):
-    data_collector = "data_collector_" + str(number)
-    return ChartModule(
-        series = [
-            {"Label": "S", "Color": "Green"},
-            {"Label": "E", "Color": "Yellow"},
-            {"Label": "I", "Color": "Red"},
-            {"Label": "R", "Color": "Grey"}
-        ],
-        canvas_width = 200,
-        canvas_height = 50,
-        data_collector_name = data_collector)
+class SEIRChartModule(ChartModule):
+    def __init__(self, canvas_width, canvas_height, district_number):
+        data_collector = "data_collector_" + str(district_number)
+        super().__init__(
+            series = [
+                {"Label": "S", "Color": "Green"},
+                {"Label": "E", "Color": "Yellow"},
+                {"Label": "I", "Color": "Red"},
+                {"Label": "R", "Color": "Grey"}
+            ],
+            canvas_width = canvas_width,
+            canvas_height = canvas_height,
+            data_collector_name = "data_collector_" + str(district_number))
 
-canvas_grid = CanvasGrid(
-    portrayal_method = agent_portrayal,
-    grid_width = 20,
-    grid_height = 30,
-    canvas_width = 400,
-    canvas_height = 400)
+class Text(TextElement):
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
 
-chart_modules = {}
-for i in range(6):
-    chart_modules["district" + str(i+1)] = instantiate_chart_module(i+1)
+    def render(self, model):
+        return self.text
+
+class DistrictInformation(TextElement):
+    def __init__(self, district):
+        super().__init__()
+        self.district = district
+
+    def render(self, model):
+        # max_exposed = model.summary[self.district]["max_exposed"]
+        # max_infected = model.summary[self.district]["max_infected"]
+        return "1"
