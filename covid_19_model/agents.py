@@ -30,7 +30,7 @@ class PersonAgent(Agent):
     def status(self):
         """Checks agent's status"""
         # Case: agent gets infected
-        if self.exposed and self.coin_toss(self.model.SEIR[self.district]["infection_rate"]):
+        if self.exposed and self.coin_toss(self.model.SEIR[self.district]["incubation_rate"]):
             self.infect()
             self.model.remove_exposed(self.district)
             self.model.add_infected(self.district)
