@@ -41,20 +41,13 @@ class SEIRChartModule(ChartModule):
             canvas_height = canvas_height,
             data_collector_name = "data_collector_" + str(district_number))
 
-class Text(TextElement):
-    def __init__(self, text):
-        super().__init__()
-        self.text = text
-
-    def render(self, model):
-        return self.text
-
 class DistrictInformation(TextElement):
-    def __init__(self, district):
+    def __init__(self, district_number):
         super().__init__()
-        self.district = district
+        self.district_number = district_number
+        self.district = "district" + str(district_number)
 
     def render(self, model):
-        # max_exposed = model.summary[self.district]["max_exposed"]
-        # max_infected = model.summary[self.district]["max_infected"]
-        return "1"
+        max_exposed = model.summary[self.district]["max_exposed"]
+        max_infected = model.summary[self.district]["max_infected"]
+        return "District %i / Max Exposed: %i at t = %i / Max Infected: %i at t = %i" % (self.district_number, max_exposed[0], max_exposed[1], max_infected[0], max_infected[1])
