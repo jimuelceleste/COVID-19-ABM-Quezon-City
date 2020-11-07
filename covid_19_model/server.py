@@ -23,10 +23,10 @@ canvas_grid = CanvasGrid(
 charts = {}
 labels = {}
 for i in range(6):
-    district_number = str(i+1)
-    district = "District " + district_number
+    district_number = i+1
+    district = "District " + str(district_number)
     charts[district] = SEIRChartModule(CHART_WIDTH, CHART_HEIGHT, district_number)
-    labels[district] = Text(district)
+    labels[district] = DistrictInformation(district_number)
 
 # Visualization Elements
 visualization_elements = [
@@ -56,7 +56,7 @@ model_params = {
                 "removal_rate": 0.3
             },
             "district2": {
-                "S": 500, "E": 1, "I": 1, "R": 0,
+                "S": 500, "E": 1, "I": 12, "R": 0,
                 "transmission_rate": 3.2,
                 "incubation_rate": 1/7,
                 "removal_rate": 0.3

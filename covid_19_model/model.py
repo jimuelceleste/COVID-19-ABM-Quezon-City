@@ -14,6 +14,8 @@ class Covid19Model(Model):
         """Initializes the model"""
         # Gets model parameters from model_parameters
         self.SEIR = model_parameters["SEIR"]
+        self.summary = self.instantiate_summary()
+        self.steps = 0
 
         # Instantiates the space/grid
         self.grid = QuezonCity(
@@ -84,8 +86,23 @@ class Covid19Model(Model):
             # Computes the next id_start
             id_start = id_end
 
+    def instantiate_summary(self):
+        summary = {}
+        for i in range(6):
+            district = "district" + str(i + 1)
+            summary[district] = {
+                "max_infected": (self.SEIR[district]["I"], 0),
+                "max_exposed": (self.SEIR[district]["E"], 0)
+            }
+        return summary
+
+    def update_summary(self, district, SEIR_var, summary_var):
+        if self.SEIR[district][SEIR_var] > self.summary[district][summary_var][0]:
+            self.summary[district][summary_var] = (self.SEIR[district][SEIR_var], self.steps)
+
     def step(self):
         """Advances the model by one step"""
+        self.steps += 1
         self.data_collector_1.collect(self)
         self.data_collector_2.collect(self)
         self.data_collector_3.collect(self)

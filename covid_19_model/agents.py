@@ -34,6 +34,7 @@ class PersonAgent(Agent):
             self.infect()
             self.model.remove_exposed(self.district)
             self.model.add_infected(self.district)
+            self.model.update_summary(self.district, SEIR_var = "I", summary_var = "max_infected")
         # Case: agent gets removed
         elif self.infected and self.coin_toss(self.model.SEIR[self.district]["removal_rate"]):
             self.remove()
@@ -51,6 +52,7 @@ class PersonAgent(Agent):
                     agent.expose()
                     agent.model.remove_susceptible(agent.district)
                     agent.model.add_exposed(agent.district)
+                    self.model.update_summary(agent.district, SEIR_var = "E", summary_var = "max_exposed")
 
     def move(self):
         """Moves agent on a random cell"""
