@@ -47,47 +47,26 @@ visualization_elements = [
 
 # Model Parameters
 model_params = {
-    "model_parameters": {
-        "SEIR": {
-            "district1": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            },
-            "district2": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            },
-            "district3": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            },
-            "district4": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            },
-            "district5": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            },
-            "district6": {
-                "S": 500, "E": 1, "I": 12, "R": 0,
-                "transmission_rate": 3.2,
-                "incubation_rate": 1/7,
-                "removal_rate": 0.3
-            }
-        }
+    "model_params": {
+        "susceptible": [[40]*6]*9,
+        "exposed": [[1]*6]*9,
+        "infected": [
+            [1,   5,  3,  1,   4,  2],   # 0-9
+            [9,  15, 13, 14,  17,  9],   # 10-19
+            [21, 23, 32, 15,  34, 12],   # 20-29
+            [35, 45, 73, 41,  59, 32],   # 30-39
+            [49, 35, 83, 91, 106, 98],   # 40-49
+            [57, 65, 74, 74,  83, 82],   # 50-59
+            [31, 18, 53, 57,  50, 49],   # 60-69
+            [21, 12, 42, 21,  34, 41],   # 70-79
+            [14,  3, 17, 13,  11, 10],   # 80+
+        ],
+        "removed": [[10]*6]*9,
+        "transmission_rate": [0.50]*6,
+        "incubation_rate": [1/7]*6,
+        "removal_rate": [0.3]*6
     },
-    "space_parameters": {
+    "space_params": {
         "width": SPACE_WIDTH,
         "height": SPACE_HEIGHT,
         "torus": True
