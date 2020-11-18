@@ -6,22 +6,25 @@ from mesa.datacollection import DataCollector
 from covid_19_model.agents import PersonAgent
 from covid_19_model.space import QuezonCity
 from covid_19_model.data_collectors import *
+import random
 
 class Covid19Model(Model):
     """Covid19 Agent-Based Model"""
 
-    def __init__(self, model_parameters, space_parameters):
+    def __init__(self, model_params, space_params):
         """Initializes the model"""
-        # Gets model parameters from model_parameters
-        self.SEIR = model_parameters["SEIR"]
-        self.summary = self.instantiate_summary()
+        # Sets initial values for SEIR
+        self.SEIR = self.initialize_SEIR_values(model_params)
+
+        # Instantiate summary data holder
+        self.summary = self.initialize_summary()
         self.steps = 0
 
         # Instantiates the space/grid
         self.grid = QuezonCity(
-            width = space_parameters["width"],
-            height = space_parameters["height"],
-            torus = space_parameters["torus"])
+            width = space_params["width"],
+            height = space_params["height"],
+            torus = space_params["torus"])
 
         # Instantiates a RandomActivation scheduler
         self.schedule = RandomActivation(self)
@@ -30,7 +33,9 @@ class Covid19Model(Model):
         self.running = True
 
         # Instantiates PersonAgents
-        self.instantiate_agents()
+        self.instantiate_agents(model_params["susceptible"], "S")
+        self.instantiate_agents(model_params["exposed"], "E")
+        self.instantiate_agents(model_params["infected"], "I")
 
         # Instantiates data collectors
         self.data_collector_1 = self.instantiate_data_collector(district = "district1")
@@ -40,53 +45,25 @@ class Covid19Model(Model):
         self.data_collector_5 = self.instantiate_data_collector(district = "district5")
         self.data_collector_6 = self.instantiate_data_collector(district = "district6")
 
-    def instantiate_data_collector(self, district):
-        """
-        Returns six instances of the DataCollector class
-        for the six districts of Quezon City.
-        """
-        return DataCollector(
-            model_reporters = {
-                "S": get_susceptible_function(district),
-                "E": get_exposed_function(district),
-                "I": get_infected_function(district),
-                "R": get_removed_function(district)
-            })
+    def initialize_SEIR_values(self, model_params):
+        """Sets initial values for SEIR"""
+        SEIR = {}
+        for i in range(6):
+            district_num = i + 1
+            district = "district" + str(district_num)
+            SEIR[district] = {
+                "S": sum([data[i] for data in model_params["susceptible"]]),
+                "E": sum([data[i] for data in model_params["exposed"]]),
+                "I": sum([data[i] for data in model_params["infected"]]),
+                "R": sum([data[i] for data in model_params["removed"]]),
+                "transmission_rate": model_params["transmission_rate"][i],
+                "incubation_rate": model_params["incubation_rate"][i],
+                "removal_rate": model_params["removal_rate"][i],
+            }
+        return SEIR
 
-    def instantiate_agents(self):
-        """Instantiate agents"""
-        # Sets the starting agent id number
-        id_start = 0
-
-        for district in self.SEIR:
-            # Gets the S, E, I, R counts to be instantiated
-            SEIR = S, E, I, R = self.get_SEIR(district)
-            id_end = id_start + sum(SEIR)
-
-            for id in range(id_start, id_end):
-                # Instantiates a PersonAgent
-                agent = PersonAgent(
-                    unique_id = id,
-                    district = district,
-                    model = self)
-
-                # Sets agent type
-                if id < S + id_start: pass
-                elif id < S + E + id_start: agent.expose()
-                elif id < S + E + I + id_start: agent.infect()
-                elif id < S + E + I + R + id_start: agent.remove()
-
-                # Adds agent to the space
-                pos = self.grid.random_pos(district = district)
-                self.grid.place_agent(agent, pos)
-
-                # Adds agent to the scheduler
-                self.schedule.add(agent)
-
-            # Computes the next id_start
-            id_start = id_end
-
-    def instantiate_summary(self):
+    def initialize_summary(self):
+        """Initializes data for summary."""
         summary = {}
         for i in range(6):
             district = "district" + str(i + 1)
@@ -96,7 +73,50 @@ class Covid19Model(Model):
             }
         return summary
 
+    def instantiate_data_collector(self, district):
+        """Returns the datacollector for given district"""
+        return DataCollector(
+            model_reporters = {
+                "S": get_susceptible_function(district),
+                "E": get_exposed_function(district),
+                "I": get_infected_function(district),
+                "R": get_removed_function(district)
+            })
+
+    def instantiate_agents(self, population, state):
+        """Instantiates PersonAgents"""
+        # Sets age range increment value
+        age_incr = 10
+
+        for i, age_group_pop in enumerate(population):
+            # Sets age range of agents
+            age_range = [(i * age_incr), (i * age_incr + age_incr - 1)]
+
+            for j, district_pop in enumerate(age_group_pop):
+                # Sets the district of agent
+                district = "district" + str(j + 1)
+
+                for k in range(district_pop):
+                    # Sets the unique_id for agent
+                    id = str(i) + str(j) + str(k) + str(random.random())
+
+                    # Instantiates agent
+                    agent = PersonAgent(
+                        unique_id = id,
+                        district = district,
+                        model = self,
+                        state = state,
+                        age = random.randint(age_range[0], age_range[1]))
+
+                    # Adds agent to a random position in its district
+                    pos = self.grid.random_pos(district)
+                    self.grid.place_agent(agent, pos)
+
+                    # Adds agent to the scheduler
+                    self.schedule.add(agent)
+
     def update_summary(self, district, SEIR_var, summary_var):
+        """Updates summary of values for a given district"""
         if self.SEIR[district][SEIR_var] > self.summary[district][summary_var][0]:
             self.summary[district][summary_var] = (self.SEIR[district][SEIR_var], self.steps)
 
@@ -144,15 +164,19 @@ class Covid19Model(Model):
         self.SEIR[district]["R"] -= 1
 
     def get_susceptible(self, district):
+        """Returns the number of susceptible."""
         return self.SEIR[district]["S"]
 
     def get_exposed(self, district):
+        """Returns the number of exposed."""
         return self.SEIR[district]["E"]
 
     def get_infected(self, district):
+        """Returns the number of infected."""
         return self.SEIR[district]["I"]
 
     def get_removed(self, district):
+        """Returns the number of removed."""
         return self.SEIR[district]["R"]
 
     def get_SEIR(self, district):
