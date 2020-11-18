@@ -4,7 +4,7 @@ import random
 
 class District:
     """A class that represents a district."""
-    
+
     def __init__(self, name, x_min, x_max, y_min, y_max):
         """Initializes a District class."""
         self.name = name
@@ -89,7 +89,6 @@ class QuezonCity(MultiGrid):
             y_min = self.height - (h * (row + 1))
             y_max = y_min + h - 1
             districts[district] = District(district, x_min, x_max, y_min, y_max)
-            print("Created District: %s; x = (%i, %i); y = (%i, %i)" % (district, x_min, x_max, y_min, y_max))
 
         return districts
 
