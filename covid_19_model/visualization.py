@@ -9,18 +9,19 @@ def agent_portrayal(agent):
         "Filled": "true",
         "r": 0.6
         }
-    if agent.susceptible:
+
+    if agent.state == "S":
         portrayal["Color"] = "green"
         portrayal["Layer"] = 0
-    elif agent.exposed:
+    elif agent.state == "E":
         portrayal["Color"] = "orange"
         portrayal["Layer"] = 1
         portrayal["r"] = 0.5
-    elif agent.infected:
+    elif agent.state == "I":
         portrayal["Color"] = "red"
         portrayal["Layer"] = 2
         portrayal["r"] = 0.4
-    elif agent.removed:
+    elif agent.state == "R":
         portrayal["Color"] = "grey"
         portrayal["Layer"] = 3
         portrayal["r"] = 0.3
