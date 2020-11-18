@@ -1,8 +1,8 @@
 # COVID-19-Agent-Based-Model
 
-This agent based model is a work in progress. It aims to simulate the COVID-19 cases in the six districts of Quezon City, Metro Manila, Philippines. 
+This agent based model is a work in progress. With this model, we aim to simulate the COVID-19 cases in the six districts of Quezon City, Metro Manila, Philippines. 
 
-We used Mesa framework to build the model.
+Mesa framework is used to build the model.
 
 Quickstart
 ----------
