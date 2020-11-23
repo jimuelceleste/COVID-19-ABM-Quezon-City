@@ -2,6 +2,7 @@
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import CanvasGrid
 from covid_19_model.visualization import *
+from .input_generator.input_generator import generate_input_to_model
 
 # Constants
 SPACE_WIDTH = 120
@@ -29,43 +30,14 @@ for i in range(6):
     labels[district] = DistrictInformation(district_number)
 
 # Visualization Elements
-visualization_elements = [
-    canvas_grid,
-    labels["District 1"],
-    charts["District 1"],
-    labels["District 2"],
-    charts["District 2"],
-    labels["District 3"],
-    charts["District 3"],
-    labels["District 4"],
-    charts["District 4"],
-    labels["District 5"],
-    charts["District 5"],
-    labels["District 6"],
-    charts["District 6"],
-]
+visualization_elements = [canvas_grid]
+for i in range(1, 7):
+    visualization_elements.append(labels["District " + str(i)])
+    visualization_elements.append(charts["District " + str(i)])
 
 # Model Parameters
 model_params = {
-    "model_params": {
-        "susceptible": [[40]*6]*9,
-        "exposed": [[1]*6]*9,
-        "infected": [
-            [1,   5,  3,  1,   4,  2],   # 0-9
-            [9,  15, 13, 14,  17,  9],   # 10-19
-            [21, 23, 32, 15,  34, 12],   # 20-29
-            [35, 45, 73, 41,  59, 32],   # 30-39
-            [49, 35, 83, 91, 106, 98],   # 40-49
-            [57, 65, 74, 74,  83, 82],   # 50-59
-            [31, 18, 53, 57,  50, 49],   # 60-69
-            [21, 12, 42, 21,  34, 41],   # 70-79
-            [14,  3, 17, 13,  11, 10],   # 80+
-        ],
-        "removed": [[10]*6]*9,
-        "transmission_rate": [0.50]*6,
-        "incubation_rate": [1/7]*6,
-        "removal_rate": [0.3]*6
-    },
+    "model_params": generate_input_to_model(agent_person_ratio = 1000),
     "space_params": {
         "width": SPACE_WIDTH,
         "height": SPACE_HEIGHT,
