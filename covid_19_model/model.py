@@ -52,13 +52,13 @@ class Covid19Model(Model):
             district_num = i + 1
             district = "district" + str(district_num)
             SEIR[district] = {
-                "S": sum([data[i] for data in model_params["susceptible"]]),
-                "E": sum([data[i] for data in model_params["exposed"]]),
-                "I": sum([data[i] for data in model_params["infected"]]),
-                "R": sum([data[i] for data in model_params["removed"]]),
-                "transmission_rate": model_params["transmission_rate"][i],
-                "incubation_rate": model_params["incubation_rate"][i],
-                "removal_rate": model_params["removal_rate"][i],
+                "S": model_params['susceptible'][i],
+                "E": model_params['exposed'][i],
+                "I": model_params['infected'][i],
+                "R": model_params['removed'][i],
+                "transmission_rate": model_params["transmission_rate"],
+                "incubation_rate": model_params["incubation_rate"],
+                "removal_rate": model_params["removal_rate"],
             }
         return SEIR
 
@@ -85,35 +85,27 @@ class Covid19Model(Model):
 
     def instantiate_agents(self, population, state):
         """Instantiates PersonAgents"""
-        # Sets age range increment value
-        age_incr = 10
+        for i, district_pop in enumerate(population):
+            district = "district" + str(i + 1)
 
-        for i, age_group_pop in enumerate(population):
-            # Sets age range of agents
-            age_range = [(i * age_incr), (i * age_incr + age_incr - 1)]
+            for j in range(int(district_pop)):
+                # Sets the unique_id for agent
+                id = str(i) + str(j) + str(random.random())
 
-            for j, district_pop in enumerate(age_group_pop):
-                # Sets the district of agent
-                district = "district" + str(j + 1)
+                # Instantiates agent
+                agent = PersonAgent(
+                    unique_id = id,
+                    district = district,
+                    model = self,
+                    state = state,
+                    age = 0)
 
-                for k in range(district_pop):
-                    # Sets the unique_id for agent
-                    id = str(i) + str(j) + str(k) + str(random.random())
+                # Adds agent to a random position in its district
+                pos = self.grid.random_pos(district)
+                self.grid.place_agent(agent, pos)
 
-                    # Instantiates agent
-                    agent = PersonAgent(
-                        unique_id = id,
-                        district = district,
-                        model = self,
-                        state = state,
-                        age = random.randint(age_range[0], age_range[1]))
-
-                    # Adds agent to a random position in its district
-                    pos = self.grid.random_pos(district)
-                    self.grid.place_agent(agent, pos)
-
-                    # Adds agent to the scheduler
-                    self.schedule.add(agent)
+                # Adds agent to the scheduler
+                self.schedule.add(agent)
 
     def update_summary(self, district, SEIR_var, summary_var):
         """Updates summary of values for a given district"""
