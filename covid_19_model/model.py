@@ -1,41 +1,51 @@
 # model.py
 from mesa import Model
 from mesa.time import RandomActivation
-from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 from covid_19_model.agents import PersonAgent
 from covid_19_model.space import QuezonCity
 from covid_19_model.data_collectors import *
+from shapely.geometry import Point
+# from mesa_geo import AgentCreator
 import random
 
 class Covid19Model(Model):
     """Covid19 Agent-Based Model"""
 
-    def __init__(self, model_params, space_params):
+    def __init__(
+        self,
+        model_params,
+        transmission_rate = 0,
+        incubation_rate = 0,
+        removal_rate = 0,
+        exposure_distance = 200,
+        mobility_range = 100,
+        age_strat = False,
+    ):
         """Initializes the model"""
-        # Sets initial values for SEIR
+        # Sets parameters and initial SEIR values of the model
         self.SEIR = self.initialize_SEIR_values(model_params)
+        self.transmission_rate = transmission_rate
+        self.incubation_rate = incubation_rate
+        self.removal_rate = removal_rate
+        self.exposure_distance = exposure_distance
+        self.mobility_range = mobility_range
 
-        # Instantiate summary data holder
+        # Sets age stratification feature of the model
+        self.age_strat = age_strat
+
+        # Sets summary-related variables
         self.summary = self.initialize_summary()
         self.steps = 0
 
-        # Instantiates the space/grid
-        self.grid = QuezonCity(
-            width = space_params["width"],
-            height = space_params["height"],
-            torus = space_params["torus"])
-
-        # Instantiates a RandomActivation scheduler
+        # Instantiates a scheduler and a space for model
         self.schedule = RandomActivation(self)
-
-        # Sets the stopping condition for the model run
-        self.running = True
+        self.grid = QuezonCity(self)
 
         # Instantiates PersonAgents
-        self.instantiate_agents(model_params["susceptible"], "S")
-        self.instantiate_agents(model_params["exposed"], "E")
-        self.instantiate_agents(model_params["infected"], "I")
+        self.instantiate_person_agents(model_params["susceptible"], "S")
+        self.instantiate_person_agents(model_params["exposed"], "E")
+        self.instantiate_person_agents(model_params["infected"], "I")
 
         # Instantiates data collectors
         self.data_collector_1 = self.instantiate_data_collector(district = "district1")
@@ -44,6 +54,9 @@ class Covid19Model(Model):
         self.data_collector_4 = self.instantiate_data_collector(district = "district4")
         self.data_collector_5 = self.instantiate_data_collector(district = "district5")
         self.data_collector_6 = self.instantiate_data_collector(district = "district6")
+
+        # Sets the running state of model to True
+        self.running = True
 
     def initialize_SEIR_values(self, model_params):
         """Sets initial values for SEIR"""
@@ -56,9 +69,6 @@ class Covid19Model(Model):
                 "E": model_params['exposed'][i],
                 "I": model_params['infected'][i],
                 "R": model_params['removed'][i],
-                "transmission_rate": model_params["transmission_rate"],
-                "incubation_rate": model_params["incubation_rate"],
-                "removal_rate": model_params["removal_rate"],
             }
         return SEIR
 
@@ -83,7 +93,7 @@ class Covid19Model(Model):
                 "R": get_removed_function(district)
             })
 
-    def instantiate_agents(self, population, state):
+    def instantiate_person_agents(self, population, state):
         """Instantiates PersonAgents"""
         for i, district_pop in enumerate(population):
             district = "district" + str(i + 1)
@@ -92,25 +102,20 @@ class Covid19Model(Model):
                 # Sets the unique_id for agent
                 id = str(i) + str(j) + str(random.random())
 
-                # Instantiates agent
+                # Gets a random point for agent
+                pos_x, pos_y = random_pos = self.grid.random_position(district)
+
+                # Instantiates Agent
                 agent = PersonAgent(
                     unique_id = id,
-                    district = district,
                     model = self,
-                    state = state,
-                    age = 0)
+                    shape = Point(pos_x, pos_y),
+                    district = district,
+                    state = state)
 
-                # Adds agent to a random position in its district
-                pos = self.grid.random_pos(district)
-                self.grid.place_agent(agent, pos)
-
-                # Adds agent to the scheduler
+                # Adds agent to grid and scheduler
+                self.grid.add_agents(agent)
                 self.schedule.add(agent)
-
-    def update_summary(self, district, SEIR_var, summary_var):
-        """Updates summary of values for a given district"""
-        if self.SEIR[district][SEIR_var] > self.summary[district][summary_var][0]:
-            self.summary[district][summary_var] = (self.SEIR[district][SEIR_var], self.steps)
 
     def step(self):
         """Advances the model by one step"""
@@ -122,59 +127,41 @@ class Covid19Model(Model):
         self.data_collector_5.collect(self)
         self.data_collector_6.collect(self)
         self.schedule.step()
-
-    def add_susceptible(self, district):
-        """Adds 1 to the susceptible of the given district."""
-        self.SEIR[district]["S"] += 1
-
-    def add_exposed(self, district):
-        """Adds 1 to the exposed of the given district."""
-        self.SEIR[district]["E"] += 1
-
-    def add_infected(self, district):
-        """Adds 1 to the infected of the given district."""
-        self.SEIR[district]["I"] += 1
-
-    def add_removed(self, district):
-        """Adds 1 to the removed of the given district."""
-        self.SEIR[district]["R"] += 1
-
-    def remove_susceptible(self, district):
-        """Subtracts 1 to the susceptible of the given district."""
-        self.SEIR[district]["S"] -= 1
-
-    def remove_exposed(self, district):
-        """Subtracts 1 to the exposed of the given district."""
-        self.SEIR[district]["E"] -= 1
-
-    def remove_infected(self, district):
-        """Subtracts 1 to the infected of the given district."""
-        self.SEIR[district]["I"] -= 1
-
-    def remove_removed(self, district):
-        """Subtracts 1 to the removed of the given district."""
-        self.SEIR[district]["R"] -= 1
-
-    def get_susceptible(self, district):
-        """Returns the number of susceptible."""
-        return self.SEIR[district]["S"]
-
-    def get_exposed(self, district):
-        """Returns the number of exposed."""
-        return self.SEIR[district]["E"]
-
-    def get_infected(self, district):
-        """Returns the number of infected."""
-        return self.SEIR[district]["I"]
-
-    def get_removed(self, district):
-        """Returns the number of removed."""
-        return self.SEIR[district]["R"]
+        self.grid._recreate_rtree()
 
     def get_SEIR(self, district):
         """Returns the SEIR value of the given district."""
-        return [
-            self.SEIR[district]["S"],
-            self.SEIR[district]["E"],
-            self.SEIR[district]["I"],
-            self.SEIR[district]["R"]]
+        return [self.SEIR[district][state] for state in "SEIR"]
+
+    def expose_one_agent(self, district):
+        """Exposes one agent from model."""
+        # Updates S, E values of given district
+        self.SEIR[district]["S"] -= 1
+        self.SEIR[district]["E"] += 1
+
+        # Updates exposed summary
+        if self.SEIR[district]["E"] > self.summary[district]["max_exposed"][0]:
+            self.summary[district]["max_exposed"] = (self.SEIR[district]["E"], self.steps)
+
+    def infect_one_agent(self, district):
+        """Infects one agent from model."""
+        # Updates E, I values of given district
+        self.SEIR[district]["E"] -= 1
+        self.SEIR[district]["I"] += 1
+
+        # Updates infected summary
+        if self.SEIR[district]["I"] > self.summary[district]["max_infected"][0]:
+            self.summary[district]["max_infected"] = (self.SEIR[district]["I"], self.steps)
+
+    def remove_one_agent(self, agent):
+        """Removes one agent from model."""
+        # Updates I, R values of given district
+        self.SEIR[agent.district]["I"] -= 1
+        self.SEIR[agent.district]["R"] += 1
+
+        # Removes agent from grid and scheduler
+        self.schedule.remove(agent)
+        self.grid.remove_agent(agent)
+
+
+
