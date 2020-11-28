@@ -1,56 +1,53 @@
 # server.py
-from mesa.visualization.ModularVisualization import ModularServer
-from mesa.visualization.modules import CanvasGrid
 from covid_19_model.visualization import *
-from .input_generator.input_generator import generate_input_to_model
+from mesa_geo.visualization.ModularVisualization import ModularServer
+from mesa_geo.visualization.MapModule import MapModule
+from covid_19_model.space import QuezonCity
+from mesa.visualization.UserParam import UserSettableParameter
+import json
 
-# Constants
-SPACE_WIDTH = 120
-SPACE_HEIGHT = 120
-CANVAS_WIDTH = 600
-CANVAS_HEIGHT = 600
-CHART_WIDTH = 200
-CHART_HEIGHT = 50
+# Adds MapModule to visualization_elements
+visualization_elements = [
+    MapModule(
+        portrayal_method = agent_portrayal,
+        view = QuezonCity.MAP_COORDS,
+        zoom = 12,
+        map_height = 600,
+        map_width = 600
+    )
+]
 
-# Instantiates space + agent representation
-canvas_grid = CanvasGrid(
-    portrayal_method = agent_portrayal,
-    grid_width = SPACE_WIDTH,
-    grid_height = SPACE_HEIGHT,
-    canvas_width = CANVAS_WIDTH,
-    canvas_height = CANVAS_HEIGHT)
-
-# Instantiates charts and labels per district
-charts = {}
-labels = {}
+# Adds charts and summary to visualization_elements
 for i in range(6):
-    district_number = i+1
-    district = "District " + str(district_number)
-    charts[district] = SEIRChartModule(CHART_WIDTH, CHART_HEIGHT, district_number)
-    labels[district] = DistrictInformation(district_number)
+    district = "District " + str(i + 1)
+    district_number = i + 1
+    visualization_elements.append(DistrictInformation(
+        district_number = district_number))
+    visualization_elements.append(SEIRChartModule(
+        canvas_width = 300,
+        canvas_height = 100,
+        district_number = district_number))
 
-# Visualization Elements
-visualization_elements = [canvas_grid]
-for i in range(1, 7):
-    visualization_elements.append(labels["District " + str(i)])
-    visualization_elements.append(charts["District " + str(i)])
+# Model Description
+model_desc = """An agent-based model that simulates COVID-19 transmission
+in the six districts of Quezon City, Metro Manila, Philippines."""
 
 # Model Parameters
 model_params = {
-    "model_params": generate_input_to_model(agent_person_ratio = 1000),
-    "space_params": {
-        "width": SPACE_WIDTH,
-        "height": SPACE_HEIGHT,
-        "torus": True
-    }
+    "model_params": json.load(open("input.json")),
+    "model_desc": UserSettableParameter('static_text', value = model_desc),
+    "transmission_rate": UserSettableParameter('slider', "Transmission Rate", 1, 0, 1, .0001),
+    "incubation_rate": UserSettableParameter('slider', "Incubation Rate", 0.142857, 0, 1, .0001),
+    "removal_rate": UserSettableParameter('slider', "Removal Rate", 0.33, 0, 1, .0001),
+    # "age_strat": UserSettableParameter('checkbox', "Age-Stratification", False),
 }
 
 # Modular Server
 server = ModularServer(
-        model_cls = Covid19Model,
-        visualization_elements = visualization_elements,
-        name = "COVID19 Agent-Based Model",
-        model_params = model_params)
+    model_cls = Covid19Model,
+    visualization_elements = visualization_elements,
+    name = "COVID-19 Agent-Based Model",
+    model_params = model_params)
 
 # Sets the server port
 server.port = 8521

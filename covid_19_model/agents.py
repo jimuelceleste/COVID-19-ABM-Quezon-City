@@ -1,21 +1,24 @@
 # agents.py
-from mesa import Agent
+from mesa_geo.geoagent import GeoAgent
+from shapely.geometry import Point
 import random
 
-class PersonAgent(Agent):
-    """An agent that represents a person."""
-    def __init__(self, unique_id, model, district, state, age):
+class PersonAgent(GeoAgent):
+    """An agent that represents a person.
+
+    Properties:
+        unique_id: Agent's unique identification.
+        model: Model which the agent belongs to.
+        shape: Agent's shapely.geometry shape.
+        district: Agent's home district.
+        state: Agents current state; one of S, E, I, or R.
+    """
+
+    def __init__(self, unique_id, model, shape, district, state):
         """Initializes a PersonAgent"""
-        super().__init__(unique_id, model)
-        self.unique_id = unique_id
-        self.model = model
+        super().__init__(unique_id, model, shape)
         self.district = district
         self.state = state
-        self.age = age
-
-    def coin_toss(self, ptrue):
-        """Generates a random choice"""
-        return random.uniform(0.0, 1.0) < ptrue
 
     def step(self):
         """Advances an agent by a step"""
@@ -23,64 +26,57 @@ class PersonAgent(Agent):
         self.interact()
         self.move()
 
+    def coin_toss(self, ptrue):
+        """Generates a random choice"""
+        if ptrue == 0:
+            return False
+        return random.uniform(0.0, 1.0) <= ptrue
+
     def status(self):
         """Checks agent's status"""
         # Case: agent gets infected
-        if self.state == "E" and self.coin_toss(self.model.SEIR[self.district]["incubation_rate"]):
+        if self.state == "E" and self.coin_toss(self.model.incubation_rate):
             self.infect()
-            self.model.remove_exposed(self.district)
-            self.model.add_infected(self.district)
-            self.model.update_summary(self.district, SEIR_var = "I", summary_var = "max_infected")
+
         # Case: agent gets removed
-        elif self.state == "I" and self.coin_toss(self.model.SEIR[self.district]["removal_rate"]):
+        elif self.state == "I" and self.coin_toss(self.model.removal_rate):
             self.remove()
-            self.model.remove_infected(self.district)
-            self.model.add_removed(self.district)
-            self.model.schedule.remove(self)
-            self.model.grid.remove_agent(self)
 
     def interact(self):
-        """Agent interacts with other agents within the district"""
+        """Agent interacts with other agents"""
         if self.state == "I":
-            neighbors = self.get_neighbors()
-            for agent in neighbors:
-                # Case: agent exposes neighbor agent
-                if agent.state == "S" and self.coin_toss(self.model.SEIR[self.district]["transmission_rate"]):
-                    agent.expose()
-                    agent.model.remove_susceptible(agent.district)
-                    agent.model.add_exposed(agent.district)
-                    self.model.update_summary(agent.district, SEIR_var = "E", summary_var = "max_exposed")
+            neighbors = self.model.grid.get_neighbors_within_distance(self, self.model.exposure_distance)
+            for neighbor in neighbors:
+                # Case: neighbor gets exposed
+                if (
+                    isinstance(neighbor, PersonAgent)
+                    and neighbor.state == "S"
+                    and self.coin_toss(self.model.transmission_rate)
+                ):
+                    neighbor.expose()
 
     def move(self):
-        """Moves agent on a random cell"""
+        """ Makes agent move to a random position.
+
+        IMPORTANT: Update this method to limit only the movement
+        of agents inside Quezon City.
+        """
         if self.state != "R":
-            possible_steps = self.get_neighborhood()
-            random_position = self.random.choice(possible_steps)
-            self.model.grid.move_agent(self, random_position)
-
-    def get_neighborhood(self):
-        """Returns agent's neighborhood"""
-        return self.model.grid.get_neighborhood(
-            pos = self.pos,
-            moore = True,
-            include_center = True)
-
-    def get_neighbors(self):
-        """Returns neighbors of agent within the district only"""
-        return self.model.grid.get_neighbors(
-            district = self.district,
-            pos = self.pos,
-            moore = True,
-            include_center = True)
+            new_x = self.shape.x + self.random.randint(-self.model.mobility_range, self.model.mobility_range)
+            new_y = self.shape.y + self.random.randint(-self.model.mobility_range, self.model.mobility_range)
+            self.shape = Point(new_x, new_y)
 
     def expose(self):
-        """Exposes agent."""
+        """Exposes agent"""
         self.state = "E"
+        self.model.expose_one_agent(self.district)
 
     def infect(self):
-        """Infects agent."""
+        """Infects agent"""
         self.state = "I"
+        self.model.infect_one_agent(self.district)
 
     def remove(self):
-        """Removes agent."""
+        """Removes agent"""
         self.state = "R"
+        self.model.remove_one_agent(self)
