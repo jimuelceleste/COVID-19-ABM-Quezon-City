@@ -6,9 +6,9 @@ Mesa framework is used to build the model.
 
 Quickstart
 ----------
-1. Install Mesa
+1. Install dependencies
 ```
-pip install mesa
+pip install -r requirements.txt
 ```
 2. Run the server
 ```
