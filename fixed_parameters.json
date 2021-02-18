@@ -1,0 +1,57 @@
+{
+    "transmission_rate": {
+      "district1": 1.025727173641695,
+      "district2": 0.7356453774659719,
+      "district3": 0.6932369546664278,
+      "district4": 0.4961175068526087,
+      "district5": 0.7030255599101999,
+      "district6": 0.799224755352798
+    },
+    "incubation_rate": {
+      "district1": 0.14285714285714285,
+      "district2": 0.14285714285714285,
+      "district3": 0.14285714285714285,
+      "district4": 0.14285714285714285,
+      "district5": 0.14285714285714285,
+      "district6": 0.14285714285714285
+    },
+    "removal_rate": {
+      "district1": 0.132139968477977,
+      "district2": 0.1918644603308998,
+      "district3": 0.1373784893043881,
+      "district4": 0.15253047702323246,
+      "district5": 0.1479080891226183,
+      "district6": 0.149888312636888
+    },
+
+    "as_infection_expectation": {
+      "district1": 1,
+      "district2": 1,
+      "district3": 1,
+      "district4": 1,
+      "district5": 1,
+      "district6": 1
+    },
+
+    "income": {
+      "district1": 1,
+      "district2": 1,
+      "district3": 1,
+      "district4": 1,
+      "district5": 1,
+      "district6": 1
+    },
+
+    "wearing_mask_percentage": 0.53,
+    "wearing_mask_protection": 0.93,
+    "physical_distancing_percentage": 0.5,
+    "physical_distancing_protection": 0.6,
+    "with_low_immunity_percentage": 0.5,
+
+    "min_age_restriction": 15,
+    "max_age_restriction": 65,
+
+    "mobile_worker_percentage": 0.484,
+    "agent_exposure_distance": 50,
+    "agent_mobility_range": 100
+}
