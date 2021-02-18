@@ -1,4 +1,5 @@
 # space.py
+
 from mesa_geo import GeoSpace, GeoAgent, AgentCreator
 from shapely.geometry import Point
 import random
@@ -43,7 +44,8 @@ class QuezonCity(GeoSpace):
         return dict([("district" + str(i+1), district_agents[i]) for i in range(6)])
 
     def random_position(self, district):
-        """Picks a random position inside the bounds of a given district.
+        """
+        Picks a random position inside the bounds of a given district.
 
         OPTIONAL: Refactor this code to implement an algorithm that has a
         better randomization strategy. (See: triangularization of polygons)
@@ -56,7 +58,7 @@ class QuezonCity(GeoSpace):
         while flag:
             # Picks a random point baed on polygon bounds
             random_pos = (random.uniform(x_min, x_max), random.uniform(y_min, y_max))
-            
+
             # Checks if random point is inside the polygon
             if polygon.contains(Point(random_pos[0], random_pos[1])):
                 flag = False

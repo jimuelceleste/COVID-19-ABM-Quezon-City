@@ -1,52 +1,30 @@
 # server.py
-from covid_19_model.visualization import *
+
 from mesa_geo.visualization.ModularVisualization import ModularServer
-from mesa_geo.visualization.MapModule import MapModule
-from covid_19_model.space import QuezonCity
 from mesa.visualization.UserParam import UserSettableParameter
-import json
+from covid_19_model.visualization import Covid19ModelVisualization
+from covid_19_model.space import QuezonCity
+from covid_19_model.model import Covid19Model
+from covid_19_model.utils import parse_json
 
-# Adds MapModule to visualization_elements
-visualization_elements = [
-    MapModule(
-        portrayal_method = agent_portrayal,
-        view = QuezonCity.MAP_COORDS,
-        zoom = 12,
-        map_height = 600,
-        map_width = 600
-    )
-]
+# Visualization
+model_visualization = Covid19ModelVisualization()
+visualization_elements = model_visualization.get_modules()
+model_name = model_visualization.MODEL_NAME
+model_description = model_visualization.MODEL_DESCRIPTION
 
-# Adds charts and summary to visualization_elements
-for i in range(6):
-    district = "District " + str(i + 1)
-    district_number = i + 1
-    visualization_elements.append(DistrictInformation(
-        district_number = district_number))
-    visualization_elements.append(SEIRChartModule(
-        canvas_width = 300,
-        canvas_height = 100,
-        district_number = district_number))
-
-# Model Description
-model_desc = """An agent-based model that simulates COVID-19 transmission
-in the six districts of Quezon City, Metro Manila, Philippines."""
-
-# Model Parameters
+# Model inputs
 model_params = {
-    "model_params": json.load(open("input.json")),
-    "model_desc": UserSettableParameter('static_text', value = model_desc),
-    "transmission_rate": UserSettableParameter('slider', "Transmission Rate", 1, 0, 1, .0001),
-    "incubation_rate": UserSettableParameter('slider', "Incubation Rate", 0.142857, 0, 1, .0001),
-    "removal_rate": UserSettableParameter('slider', "Removal Rate", 0.33, 0, 1, .0001),
-    # "age_strat": UserSettableParameter('checkbox', "Age-Stratification", False),
+    "model_desc": UserSettableParameter('static_text', value = model_description),
+    "variable_params": parse_json("variable_parameters.json"),
+    "fixed_params": parse_json("fixed_parameters.json"),
 }
 
-# Modular Server
+# Instantiates ModularServer
 server = ModularServer(
     model_cls = Covid19Model,
     visualization_elements = visualization_elements,
-    name = "COVID-19 Agent-Based Model",
+    name = model_name,
     model_params = model_params)
 
 # Sets the server port
