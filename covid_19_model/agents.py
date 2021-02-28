@@ -19,7 +19,6 @@ class PersonAgent(GeoAgent):
         age: Agent's age
         wearing_mask: True if agent is wearing a mask; else, False
         physical_distancing: True if agent is observing physical distance; else, False
-        immunity: Agent's immunity level
         mobile_worker: True if agent is a mobile worker; else, False
     """
 
@@ -33,7 +32,6 @@ class PersonAgent(GeoAgent):
         age,
         wearing_mask,
         physical_distancing,
-        immunity,
         mobile_worker,
     ):
         """
@@ -45,7 +43,6 @@ class PersonAgent(GeoAgent):
         self.age = age
         self.wearing_mask = wearing_mask
         self.physical_distancing = physical_distancing
-        self.immunity = immunity
         self.mobile_worker = mobile_worker
         self.days_infected = 0
         self.days_incubating = 0
@@ -63,7 +60,7 @@ class PersonAgent(GeoAgent):
         Checks agent's status
         """
         if self.state == State.EXPOSED:
-            if coin_toss(self.model.as_infection_probability(self.district)):
+            if coin_toss(self.model.as_infection_probability[self.district]):
                 self.transition(
                     district = self.district,
                     prev_state = self.state,
@@ -94,19 +91,23 @@ class PersonAgent(GeoAgent):
                     and neighbor.state == State.SUSCEPTIBLE
                     and coin_toss(self.model.transmission_rate[self.district])
                 ):
-                    if (
-                        neighbor.with_low_immunity()
-                        and not (
-                            neighbor.protected_by_wearing_mask()
-                            or neighbor.protected_by_physical_distancing()
-                        )
-                    ):
-                        neighbor.transition(
-                            district = neighbor.district,
-                            prev_state = neighbor.state,
-                            next_state = State.EXPOSED,
-                            update_summary = True,
-                            summary_key = "max_exposed")
+                    if neighbor.with_low_immunity():
+                        if (
+                            not neighbor.protected_by_wearing_mask()
+                            and not neighbor.protected_by_physical_distancing()
+                        ):
+                    # if coin_toss(neighbor.model.localized_immunity[neighbor.district]):
+
+                    # if (
+                        # not neighbor.protected_by_wearing_mask()
+                        # and not neighbor.protected_by_physical_distancing()
+                    # ):
+                            neighbor.transition(
+                                district = neighbor.district,
+                                prev_state = neighbor.state,
+                                next_state = State.EXPOSED,
+                                update_summary = True,
+                                summary_key = "max_exposed")
 
     def move(self):
         """
@@ -120,6 +121,7 @@ class PersonAgent(GeoAgent):
                 -self.mobility_range(),
                 self.mobility_range())
             self.shape = Point(new_x, new_y)
+            # self.district = self.model.grid.get_district(self.shape, self.district)
 
     def allowed_to_move(self):
         """
@@ -172,7 +174,8 @@ class PersonAgent(GeoAgent):
             self.model.update_summary("total", summary_key, next_state)
 
     def with_low_immunity(self):
-        return self.immunity == Immunity.LOW and self.is_senior_citizen()
+        return coin_toss(1 - self.model.localized_immunity[self.district])
+        # return self.immunity == Immunity.LOW and self.is_senior_citizen()
 
     def is_senior_citizen(self):
         return self.age >= 60
