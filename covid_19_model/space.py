@@ -64,3 +64,14 @@ class QuezonCity(GeoSpace):
                 flag = False
 
         return random_pos
+
+    def get_district(self, point, current_district):
+        output = current_district
+
+        for i in range(6):
+            district = self.districts["district" + str(i + 1)]
+            if district.shape.contains(point):
+                output = "district" + district.unique_id
+                break
+
+        return output

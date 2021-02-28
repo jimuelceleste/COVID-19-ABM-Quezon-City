@@ -46,7 +46,17 @@
     "wearing_mask_protection": 0.93,
     "physical_distancing_percentage": 0.5,
     "physical_distancing_protection": 0.6,
-    "with_low_immunity_percentage": 0.5,
+    "district_poverty_score": {
+      "district1": 0.750376,
+      "district2": 0.556134,
+      "district3": 1,
+      "district4": 0.944586,
+      "district5": 0.668347,
+      "district6": 0.786503
+    },
+    "natural_immunity": 0.699,
+    "preexisting_conditions": 0.22,
+    "exercise": 0.328,
 
     "min_age_restriction": 15,
     "max_age_restriction": 65,

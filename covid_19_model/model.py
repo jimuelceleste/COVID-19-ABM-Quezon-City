@@ -32,19 +32,31 @@ class Covid19Model(Model):
 
         # Age-stratified infection expectation
         self.as_infection_expectation = fixed_params["as_infection_expectation"]
-
-        # Income
-        self.income = fixed_params["income"]
+        self.as_infection_probability = self.compute_as_infection_probability(
+            self.as_infection_expectation,
+            self.incubation_rate)
 
         # Behavioral- and disease-resistance factors
+        self.wearing_mask_percentage = fixed_params["wearing_mask_percentage"]
         self.wearing_mask_protection = fixed_params["wearing_mask_protection"]
+        self.physical_distancing_percentage = fixed_params["physical_distancing_percentage"]
         self.physical_distancing_protection = fixed_params["physical_distancing_protection"]
+        self.district_poverty_score = fixed_params["district_poverty_score"]
+        self.natural_immunity = fixed_params["natural_immunity"]
+        self.preexisting_conditions = fixed_params["preexisting_conditions"]
+        self.exercise = fixed_params["exercise"]
+        self.localized_immunity = self.compute_localized_immunity(
+            self.district_poverty_score,
+            self.natural_immunity,
+            self.preexisting_conditions,
+            self.exercise)
 
         # Quarantine age-restriction policy
         self.min_age_restriction = fixed_params["min_age_restriction"]
         self.max_age_restriction = fixed_params["max_age_restriction"]
 
         # Agent movement configuration
+        self.mobile_worker_percentage = fixed_params["mobile_worker_percentage"]
         self.agent_exposure_distance = fixed_params["agent_exposure_distance"]
         self.agent_mobility_range = fixed_params["agent_mobility_range"]
 
@@ -63,10 +75,9 @@ class Covid19Model(Model):
                 state,
                 self.schedule,
                 self.grid,
-                fixed_params["wearing_mask_percentage"],
-                fixed_params["physical_distancing_percentage"],
-                fixed_params["with_low_immunity_percentage"],
-                fixed_params["mobile_worker_percentage"])
+                self.wearing_mask_percentage,
+                self.physical_distancing_percentage,
+                self.mobile_worker_percentage)
 
         # Instantiates data collectors
         self.data_collector_1 = self.instantiate_data_collector("district1")
@@ -75,6 +86,7 @@ class Covid19Model(Model):
         self.data_collector_4 = self.instantiate_data_collector("district4")
         self.data_collector_5 = self.instantiate_data_collector("district5")
         self.data_collector_6 = self.instantiate_data_collector("district6")
+        self.data_collector_total = self.instantiate_data_collector("total")
 
         # Sets summary-related variables
         self.summary = self.initialize_summary_dictionary()
@@ -143,7 +155,6 @@ class Covid19Model(Model):
         grid,
         wearing_mask_percentage,
         physical_distancing_percentage,
-        with_low_immunity_percentage,
         mobile_worker_percentage,
     ):
         """
@@ -164,7 +175,6 @@ class Covid19Model(Model):
                     age = random.randint(min_age, max_age)
                     wearing_mask = coin_toss(wearing_mask_percentage)
                     physical_distancing = coin_toss(physical_distancing_percentage)
-                    immunity = Immunity.LOW if coin_toss(with_low_immunity_percentage) else Immunity.HIGH
                     mobile_worker = coin_toss(mobile_worker_percentage) if 18 <= age <= 65 else False
 
                     # Generates a random point for agent's position
@@ -181,7 +191,6 @@ class Covid19Model(Model):
                         age = age,
                         wearing_mask = wearing_mask,
                         physical_distancing = physical_distancing,
-                        immunity = immunity,
                         mobile_worker = mobile_worker)
 
                     # Adds agent to grid and scheduler
@@ -199,6 +208,7 @@ class Covid19Model(Model):
         self.data_collector_4.collect(self)
         self.data_collector_5.collect(self)
         self.data_collector_6.collect(self)
+        self.data_collector_total.collect(self)
         self.schedule.step()
         self.grid._recreate_rtree()
 
@@ -218,11 +228,34 @@ class Covid19Model(Model):
         if self.SEIR[district][state] > self.summary[district][max_state][0]:
             self.summary[district][max_state] = (self.SEIR[district][state], self.steps)
 
-    def as_infection_probability(self, district):
-        """
-        Age-stratified infection probability
-        """
-        return self.as_infection_expectation[district] * self.incubation_rate[district]
+    # def as_infection_probability(self, district):
+    #     """
+    #     Age-stratified infection probability
+    #     """
+    #     return self.as_infection_expectation[district] * self.incubation_rate[district]
+
+    def compute_as_infection_probability(self, as_infection_expectation, incubation_rate):
+        as_infection_probability = {}
+
+        for key in incubation_rate:
+            as_infection_expectation[key] = as_infection_expectation[key] * incubation_rate[key]
+
+        return as_infection_expectation
+
+    def compute_localized_immunity(
+        self,
+        district_poverty_score,
+        natural_immunity,
+        preexisting_conditions,
+        exercise
+    ):
+        localized_immunity = {}
+        immunity = natural_immunity * preexisting_conditions * exercise
+
+        for key in district_poverty_score:
+            localized_immunity[key] = district_poverty_score[key] * immunity
+
+        return localized_immunity
 
     def add_one(self, district, compartment):
         """
