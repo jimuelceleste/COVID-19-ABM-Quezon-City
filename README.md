@@ -14,3 +14,5 @@ pip3 install -r requirements.txt
 ```
 mesa runserver
 ```
+
+<img width="1440" alt="Screenshot 2022-11-09 at 8 22 25 AM" src="https://user-images.githubusercontent.com/24730195/200705381-98822c47-85ec-4d42-988d-788c3707f2f5.png">
